@@ -1,0 +1,9 @@
+Note:  This library will currently only work with a Java 6 or greater VM 
+(though, it still needs to be tested with Java 7).
+
+More importantly, this will only operate on Mac OS X, with Growl installed. 
+
+Growl may be found here:
+
+http://growl.info
+

@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.blastedmachine</groupId>
   <artifactId>growlbridge</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.1-SNAPSHOT</version>
   <name>${project.artifactId}</name>
   <description>A simple Scala-Growl bridge</description>
   <inceptionYear>2011</inceptionYear>

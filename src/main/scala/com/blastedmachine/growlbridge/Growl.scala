@@ -6,23 +6,31 @@ object Growl {
   val GROWL_APPLICATION = "GrowlHelperApp"
 }
 
-class Growl(val applicationName: String, availableNotifications: List[String], enabledNotifications: List[String]) {
+private trait GrowlEngine {
 
-  private var appleScriptEngine: ScriptEngine = null
+  def isGrowlEnabled(): Boolean
 
-  def init() = {
-    val scriptEngineManager = new ScriptEngineManager();
-    appleScriptEngine = scriptEngineManager.getEngineByName("AppleScript");
-    if (appleScriptEngine == null) {
-      throw new RuntimeException("No AppleScriptEngine available");
-    }
+  def registerApplication()
 
-    if (!isGrowlEnabled()) {
-      throw new RuntimeException("No Growl process was found.");
-    }
+  def notify(notificationName: String, title: String, message: String)
+}
+
+private class UnavailableGrowlEngine extends GrowlEngine {
+  override def isGrowlEnabled(): Boolean = false
+
+  override def registerApplication() = {
+    // TODO: Log it?
   }
 
-  def registerApplication() = {
+  override def notify(notifcationName: String, title: String, message: String) = {
+    // TODO: Log it?
+  }
+}
+
+private class AppleScriptGrowlEngine(appleScriptEngine: ScriptEngine, val applicationName: String, 
+    availableNotifications: List[String], enabledNotifications: List[String]) extends GrowlEngine {
+
+  override def registerApplication() = {
     val script = ScriptBuilder().add("tell application ")
       .quote(Growl.GROWL_APPLICATION)
       .nextRow("set the availableList to ")
@@ -36,7 +44,7 @@ class Growl(val applicationName: String, availableNotifications: List[String], e
     executeVoidScript(script)
   }
 
-  def notify(notificationName: String, title: String, message: String) {
+  override def notify(notificationName: String, title: String, message: String) {
     val script = ScriptBuilder().add("tell application ")
       .quote(Growl.GROWL_APPLICATION)
       .nextRow("notify with name ").quote(notificationName)
@@ -47,7 +55,7 @@ class Growl(val applicationName: String, availableNotifications: List[String], e
     executeVoidScript(script);
   }
 
-  def isGrowlEnabled(): Boolean = {
+  override def isGrowlEnabled(): Boolean = {
     val script = ScriptBuilder().add("tell application ")
       .quote("System Events")
       .nextRow("return count of (every process whose name is ")
@@ -73,4 +81,33 @@ class Growl(val applicationName: String, availableNotifications: List[String], e
       case _ =>
     }
   }
+
+}
+
+class Growl(val applicationName: String, availableNotifications: List[String], enabledNotifications: List[String]) {
+
+  private val growlEngine: GrowlEngine = new ScriptEngineManager().getEngineByName("AppleScript") match {
+    case scriptEngine: ScriptEngine => {
+      val growlEngine = new AppleScriptGrowlEngine(scriptEngine, applicationName, availableNotifications, enabledNotifications)
+      if (growlEngine.isGrowlEnabled()) {
+        growlEngine
+      } else {
+        new UnavailableGrowlEngine
+      }
+    }
+    case _ => new UnavailableGrowlEngine
+  }
+
+  def init() = {
+    val scriptEngineManager = new ScriptEngineManager();
+  }
+
+  def registerApplication() = {
+    this.growlEngine.registerApplication()
+  }
+
+  def notify(notificationName: String, title: String, message: String) {
+    this.growlEngine.notify(notificationName, title, message)
+  }
+
 }

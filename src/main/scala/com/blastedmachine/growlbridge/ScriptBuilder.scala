@@ -14,9 +14,7 @@ private[growlbridge] class ScriptBuilder {
   }
 
   def quote(text: String): ScriptBuilder = {
-    builder.append("\"");
-    builder.append(text);
-    builder.append("\"");
+    builder.append(quotedString(text));
     return this;
   }
 
@@ -33,9 +31,11 @@ private[growlbridge] class ScriptBuilder {
   def array(array: Seq[String]): ScriptBuilder = {
     builder.append("{");
 
-    builder.append(array.map("\"%s\"".format(_)).mkString(", "))
+    builder.append(array.map(quotedString(_)).mkString(", "))
 
     builder.append("}");
     return this;
   }
+  
+  private def quotedString(text: String) = "\"%s\"".format(text)
 }

@@ -4,8 +4,15 @@ import javax.script.ScriptEngineManager
 
 case class AppDescriptor(val applicationName: String, val appImage: String = "")
 
+case class NotificationDescriptor(val name: String, val appImage: String = "")
+
+
 object Growl {
   val GROWL_APPLICATION = "GrowlHelperApp"
+  
+  implicit def stringToAppDescriptor(name: String) = AppDescriptor(name)
+  
+  implicit def stringToNotificationDesc(name: String) = NotificationDescriptor(name)  
 }
 
 private trait GrowlEngine {
@@ -14,7 +21,7 @@ private trait GrowlEngine {
 
   def registerApplication()
 
-  def notify(notificationName: String, title: String, message: String)
+  def notify(notification: NotificationDescriptor, title: String, message: String)
 }
 
 private class UnavailableGrowlEngine extends GrowlEngine {
@@ -25,7 +32,7 @@ private class UnavailableGrowlEngine extends GrowlEngine {
     println("Growl is unavailable")
   }
 
-  override def notify(notifcationName: String, title: String, message: String) = {
+  override def notify(notifcation: NotificationDescriptor, title: String, message: String) = {
     // TODO: Log it?
     println("Growl is unavailable")
   }
@@ -48,15 +55,17 @@ private class AppleScriptGrowlEngine(appleScriptEngine: ScriptEngine, val applic
     executeVoidScript(script)
   }
 
-  override def notify(notificationName: String, title: String, message: String) {
+  override def notify(notification: NotificationDescriptor, title: String, message: String) {
     val script = ScriptBuilder().add("tell application ")
       .quote(Growl.GROWL_APPLICATION)
-      .nextRow("notify with name ").quote(notificationName)
+      .nextRow("notify with name ").quote(notification.name)
       .add(" title ").quote(title)
       .add(" description ").quote(message)
       .add(" application name ").quote(application.applicationName)
 
-    if (!application.appImage.isEmpty()) {
+    if(!notification.appImage.isEmpty()){
+      script.add("image from location ").filename(notification.appImage)
+    } else if (!application.appImage.isEmpty()) {
       script.add("image from location ").filename(application.appImage)
     }
     script.nextRow("end tell");
@@ -107,16 +116,12 @@ class Growl(val application: AppDescriptor, availableNotifications: List[String]
     case _ => new UnavailableGrowlEngine
   }
 
-  def init() = {
-    val scriptEngineManager = new ScriptEngineManager();
-  }
-
   def registerApplication() = {
     this.growlEngine.registerApplication()
   }
 
-  def notify(notificationName: String, title: String, message: String) {
-    this.growlEngine.notify(notificationName, title, message)
+  def notify(notification: NotificationDescriptor, title: String, message: String) {
+    this.growlEngine.notify(notification, title, message)
   }
 
 }

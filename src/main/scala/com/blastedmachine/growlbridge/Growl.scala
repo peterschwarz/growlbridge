@@ -2,7 +2,7 @@ package com.blastedmachine.growlbridge
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
 
-case class AppDescriptor(val applicationName: String, val appImage: String)
+case class AppDescriptor(val applicationName: String, val appImage: String = "")
 
 object Growl {
   val GROWL_APPLICATION = "GrowlHelperApp"

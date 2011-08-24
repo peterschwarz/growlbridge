@@ -17,6 +17,14 @@ private[growlbridge] class ScriptBuilder {
     builder.append(quotedString(text));
     return this;
   }
+  
+  def filename(filename: String): ScriptBuilder = {
+    if (filename.indexOf("file:/") == 0 && filename.charAt(6) != '/')
+        builder.append(quotedString("file:///" + filename.substring(6)))
+    else
+      builder.append(quotedString(filename))
+    return this
+  }
 
   def nextRow(text: String): ScriptBuilder = {
     builder.append("\n");

@@ -2,6 +2,8 @@ package com.blastedmachine.growlbridge
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
 
+case class AppDescriptor(val applicationName: String, val appImage: String)
+
 object Growl {
   val GROWL_APPLICATION = "GrowlHelperApp"
 }
@@ -20,14 +22,16 @@ private class UnavailableGrowlEngine extends GrowlEngine {
 
   override def registerApplication() = {
     // TODO: Log it?
+    println("Growl is unavailable")
   }
 
   override def notify(notifcationName: String, title: String, message: String) = {
     // TODO: Log it?
+    println("Growl is unavailable")
   }
 }
 
-private class AppleScriptGrowlEngine(appleScriptEngine: ScriptEngine, val applicationName: String, 
+private class AppleScriptGrowlEngine(appleScriptEngine: ScriptEngine, val application: AppDescriptor, 
     availableNotifications: List[String], enabledNotifications: List[String]) extends GrowlEngine {
 
   override def registerApplication() = {
@@ -38,7 +42,7 @@ private class AppleScriptGrowlEngine(appleScriptEngine: ScriptEngine, val applic
       .nextRow("set the enabledList to ")
       .array(enabledNotifications)
       .nextRow("register as application ")
-      .quote(applicationName)
+      .quote(application.applicationName)
       .add(" all notifications availableList default notifications enabledList")
       .nextRow("end tell").get()
     executeVoidScript(script)
@@ -50,9 +54,14 @@ private class AppleScriptGrowlEngine(appleScriptEngine: ScriptEngine, val applic
       .nextRow("notify with name ").quote(notificationName)
       .add(" title ").quote(title)
       .add(" description ").quote(message)
-      .add(" application name ").quote(applicationName)
-      .nextRow("end tell").get();
-    executeVoidScript(script);
+      .add(" application name ").quote(application.applicationName)
+
+    if (!application.appImage.isEmpty()) {
+      script.add("image from location ").filename(application.appImage)
+    }
+    script.nextRow("end tell");
+
+    executeVoidScript(script.get());
   }
 
   override def isGrowlEnabled(): Boolean = {
@@ -84,11 +93,11 @@ private class AppleScriptGrowlEngine(appleScriptEngine: ScriptEngine, val applic
 
 }
 
-class Growl(val applicationName: String, availableNotifications: List[String], enabledNotifications: List[String]) {
+class Growl(val application: AppDescriptor, availableNotifications: List[String], enabledNotifications: List[String]) {
 
   private val growlEngine: GrowlEngine = new ScriptEngineManager().getEngineByName("AppleScript") match {
     case scriptEngine: ScriptEngine => {
-      val growlEngine = new AppleScriptGrowlEngine(scriptEngine, applicationName, availableNotifications, enabledNotifications)
+      val growlEngine = new AppleScriptGrowlEngine(scriptEngine, application, availableNotifications, enabledNotifications)
       if (growlEngine.isGrowlEnabled()) {
         growlEngine
       } else {

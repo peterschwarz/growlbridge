@@ -1,4 +1,5 @@
 package com.blastedmachine.growlbridge
+import java.io.File
 
 /**
  * @author ${user.name}
@@ -6,7 +7,7 @@ package com.blastedmachine.growlbridge
 object App {
 
   def main(args: Array[String]) {
-    val growl = new Growl("Growl Demo",
+    val growl = new Growl(AppDescriptor("Growl Demo", new File("src/main/resources/scala-icon.png").toURL().toString),
       List("system", "boss", "spam"),
       List("system", "boss"))
     growl.registerApplication();

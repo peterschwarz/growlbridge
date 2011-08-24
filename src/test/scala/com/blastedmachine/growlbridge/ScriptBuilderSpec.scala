@@ -26,4 +26,12 @@ class ScriptBuilderSpec extends FlatSpec with ShouldMatchersForJUnit {
     ScriptBuilder().quote("a String").get should be ("\"a String\"")
   }
   
+  it should "quote a filename" in {
+    ScriptBuilder().filename("file:///foo/bar").get should be ("\"file:///foo/bar\"")
+  }
+  
+  it should "quote and correct a filename" in {
+    ScriptBuilder().filename("file:/foo/bar").get should be ("\"file:///foo/bar\"")
+  }
+  
 }
